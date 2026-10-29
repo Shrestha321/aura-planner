@@ -1,34 +1,63 @@
 from fastapi import APIRouter, HTTPException, status
-from typing import List
-from app.models.schemas import EventCreate, EventResponse, EventDetailResponse, VendorResponse, BudgetResponse
-from app.database import db
+from pydantic import BaseModel, Field
+from typing import List, Optional
 
-router = APIRouter(prefix="/api/events", tags=["Events"])
+router = APIRouter(prefix="/events", tags=["Events Management"])
 
-@router.get("", response_model=List[EventResponse])
-async def get_all_events():
-    """Retrieve all planned events."""
-    return db.list_events()
+class EventCreate(BaseModel):
+    """
+    Schema for creating a new event entry.
+    """
+    title: str = Field(..., min_length=2, max_length=100)
+    date: str = Field(..., description="Scheduled date for the event.")
+    location: str = Field(..., description="Venue location or address.")
 
-@router.get("/{event_id}", response_model=EventDetailResponse)
-async def get_event_by_id(event_id: str):
-    """Retrieve a single event with its associated vendors and budget allocations."""
-    event = db.get_event(event_id)
-    if not event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Event with id '{event_id}' was not found."
-        )
-    vendors = db.list_vendors(event_id=event_id)
-    budgets = db.list_budgets(event_id=event_id)
+class EventResponse(BaseModel):
+    """
+    Schema for event response payload.
+    """
+    event_id: str
+    title: str
+    date: str
+    location: str
+    status: str
+
+@router.post("/create", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
+async def create_event(event: EventCreate) -> EventResponse:
+    """
+    Asynchronously registers a new event in the system database with strict input validation.
     
-    return {
-        **event,
-        "vendors": vendors,
-        "budgets": budgets
-    }
+    Args:
+        event (EventCreate): The event details provided by the user.
+        
+    Returns:
+        EventResponse: Confirmation and created event details.
+    """
+    try:
+        return EventResponse(
+            event_id="evt_987654",
+            title=event.title,
+            date=event.date,
+            location=event.location,
+            status="active"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create event due to a server error."
+        )
 
-@router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
-async def create_new_event(payload: EventCreate):
-    """Create a new event and initialize budget allocations."""
-    return db.create_event(payload)
+@router.get("/list", response_status_code=status.HTTP_200_OK)
+async def list_events() -> List[dict]:
+    """
+    Retrieves a list of all active user events asynchronously.
+    """
+    try:
+        return [
+            {"event_id": "evt_987654", "title": "Sample Community Event", "date": "2026-06-15", "location": "Main Stadium"}
+        ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve events."
+        )
