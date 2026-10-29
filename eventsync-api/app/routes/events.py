@@ -47,7 +47,7 @@ async def create_event(event: EventCreate) -> EventResponse:
             detail="Failed to create event due to a server error."
         )
 
-@router.get("/list", response_status_code=status.HTTP_200_OK)
+@router.get("/list", status_code=status.HTTP_200_OK)
 async def list_events() -> List[dict]:
     """
     Retrieves a list of all active user events asynchronously.
