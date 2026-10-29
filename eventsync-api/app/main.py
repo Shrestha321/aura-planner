@@ -9,12 +9,16 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure Cross-Origin Resource Sharing (CORS)
+# Configure Cross-Origin Resource Sharing (CORS) - Secured for Production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local dev and flexible deployment
+    allow_origins=[
+        "https://aura-planner-sage.vercel.app",  # Your live Vercel frontend
+        "http://localhost:3000",                  # Local development
+        "http://127.0.0.1:3000"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
